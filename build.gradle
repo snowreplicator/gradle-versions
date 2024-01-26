@@ -37,12 +37,15 @@ application {
 }
 
 java {
-    sourceCompatibility = '8'
+    sourceCompatibility = 'VERSION_1_8'
 }
+
+
 
 wrapper {
     gradleVersion("6.9.2")
 }
+
 
 configurations {
     jar.archiveFileName = jar.project.name + '.jar'
