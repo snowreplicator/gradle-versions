@@ -1,0 +1,70 @@
+plugins {
+    id "java"
+    id "maven-publish"
+    id "application"
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+}
+
+group 'ru.zorro'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+dependencies {
+
+}
+
+ext {
+    javaMainClass = "ru.zorro.gradle_versions.Main"
+}
+
+application {
+    mainClassName = javaMainClass
+}
+
+java {
+    sourceCompatibility = '8'
+}
+
+wrapper {
+    gradleVersion("6.9.2")
+}
+
+configurations {
+    jar.archiveFileName = jar.project.name + '.jar'
+}
+
+jar {
+    into("META-INF/maven/$project.group/$project.name") {
+        from { generatePomFileForMavenJavaPublication }
+        rename ".*", "pom.xml"
+    }
+}
+
+task runWithJavaExec(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class of gradle-versions project"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = javaMainClass
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': javaMainClass
+    }
+}
