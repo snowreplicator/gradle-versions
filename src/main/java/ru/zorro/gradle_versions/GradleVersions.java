@@ -6,17 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GradleVersions {
-
-    //private final static int FILES_WALK_DEPTH = 1;
-    //private final static int DIRS_WALK_DEPTH = 1;
 
     private static final String BUILD_GRADLE_FILE = "build.gradle";
     private static final String WORD_VERSION = "version";
@@ -28,20 +25,44 @@ public class GradleVersions {
     }
 
     public static void scanGradleVersions(String[] args) throws IOException {
-        System.out.println("---------------start---------------");
+        System.out.println("---------------start---------------\n");
         String scanDirectory = getScanDirectory(args);
-        scanDirectory = "k:\\java_projects\\_planner_idea_workspace_20230912_small\\modules";
-        System.out.println("basePath: " + scanDirectory);
         List<Path> paths = getGradleFiles(scanDirectory);
         List<Artefact> artefacts = GetArtefacts(paths);
-        for (Artefact artefact:artefacts) System.out.println("artefact: " + artefact.toString());
+        CheckArtefactDuplicates(artefacts);
+        PrintArtefacts(artefacts);
 
-        //todo !!!!!! убрать uuid из артефакта и сделать сравнение по группа артефакт версия
-        // функции проверки на уникальность артефактов, на дубли без учета версии
-
-        System.out.println("---------------end---------------");
+        System.out.println("\n---------------end---------------");
     }
 
+    private static void PrintArtefacts(List<Artefact> artefacts) {
+        System.out.println("artefacts:");
+        for (Artefact artefact : artefacts) {
+            System.out.println("groupId: " + SYMBOL_QUOTE + artefact.getGroup()    + SYMBOL_QUOTE
+                        + ", artifactId: " + SYMBOL_QUOTE + artefact.getArtefact() + SYMBOL_QUOTE
+                           + ", version: " + SYMBOL_QUOTE + artefact.getVersion()  + SYMBOL_QUOTE);
+        }
+
+    }
+
+    // проверка списка артефактов на дубли
+    private static void CheckArtefactDuplicates(List<Artefact> artefacts) {
+        Set<Artefact> uniques = new HashSet<>();
+        List<Artefact> duplicates = new ArrayList<>();
+        artefacts.forEach(artefact -> {
+            if (!uniques.add(artefact)) {
+                duplicates.add(artefact);
+            }
+        });
+
+        if (!duplicates.isEmpty()) {
+            System.out.println("found artefacts duplicates:");
+            for (Artefact artefact:duplicates)
+                System.out.println(artefact);
+        } else {
+            System.out.println("no duplicates found");
+        }
+    }
 
     // получение списка артефактов
     private static List<Artefact> GetArtefacts(List<Path> paths) throws IOException {
@@ -51,6 +72,7 @@ public class GradleVersions {
             if (artefact != null)
                 artefacts.add(artefact);
         }
+        System.out.println("found " + artefacts.size() + " artefacts");
         return artefacts;
     }
 
@@ -62,8 +84,8 @@ public class GradleVersions {
                 if (containsIgnoreCase(line, WORD_VERSION) && line.contains(SYMBOL_EQUALS) && line.contains(SYMBOL_QUOTE)) {
                     String artefactName = getArtefactName(path);
                     String version = parseVersion(line);
-                    if (artefactName != null && !artefactName.trim().isEmpty() && version != null && !version.trim().isEmpty()) {
-                        return new Artefact(UUID.randomUUID(), MDDR_GROUP, artefactName, version, path.toAbsolutePath().toString());
+                    if (!artefactName.trim().isEmpty() && version != null && !version.trim().isEmpty()) {
+                        return new Artefact(MDDR_GROUP, artefactName, version, path.toAbsolutePath().toString());
                     }
                 }
             }
@@ -112,6 +134,7 @@ public class GradleVersions {
         String baseDir = Paths.get("").toAbsolutePath().toString();
         if (args != null && args.length > 0 && Files.exists(Paths.get(args[0])))
              baseDir = Paths.get(args[0]).toAbsolutePath().toString();
+        System.out.println("basePath: " + baseDir);
         return baseDir;
     }
 
@@ -128,6 +151,7 @@ public class GradleVersions {
             if (str.regionMatches(true, i, searchStr, 0, length))
                 return true;
         }
+
         return false;
     }
 
